@@ -4,13 +4,41 @@ import { buildSchema } from 'graphql'
 
 let schema = buildSchema(`
     type Query {
-        hello:String
+        hello:User
+    }
+
+    type User {
+        firstName: String
+        lastName: String
+        random: Int
+        pets(species:Species):[Pet!]!
+    }
+
+    type Pet {
+        name:String
+        species: Species
+    }
+
+    enum Species {
+        DOG
+        CAT
+        FISH
     }
 `)
-
+let pets = [
+    {name: 'Fido', species: "DOG"},
+    {name: 'Goldie', species: "FISH"},
+    {name: 'Spot', species: "DOG"},
+    {name: 'Muffins', species: "CAT"},
+]
 let root = {
     hello: ()=> {
-        return 'Booyah graphql'
+        return {
+            firstName: "John",
+            lastName: "Doe",
+            random: ()=> Math.floor(Math.random() *  10),
+            pets : (args:{species:string}) => args.species ? pets.filter(p => p.species === args.species):pets
+        }
     }
 }
 
