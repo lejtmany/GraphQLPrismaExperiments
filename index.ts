@@ -24,8 +24,19 @@ let schema = buildSchema(`
         CAT
         FISH
     }
+
+    type Mutation {
+        createPet(pet: PetInput):Pet
+    }
+
+    input PetInput {
+        name:String
+        species: Species
+    }
 `)
-let pets = [
+
+type Pet = {name:string, species: 'DOG'|'CAT'|'FISH'}
+let pets:Pet[] = [
     {name: 'Fido', species: "DOG"},
     {name: 'Goldie', species: "FISH"},
     {name: 'Spot', species: "DOG"},
@@ -39,6 +50,10 @@ let root = {
             random: ()=> Math.floor(Math.random() *  10),
             pets : (args:{species:string}) => args.species ? pets.filter(p => p.species === args.species):pets
         }
+    },
+    createPet: (args:{pet:Pet})=>{
+        pets.push(args.pet)
+        return args.pet
     }
 }
 
