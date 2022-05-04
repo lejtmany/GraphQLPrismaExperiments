@@ -1,59 +1,75 @@
 import express from 'express'
 import { graphqlHTTP } from 'express-graphql'
 import { buildSchema } from 'graphql'
+import { PrismaClient } from '@prisma/client'
+
+const prisma = new PrismaClient()
+
 
 let schema = buildSchema(`
-    type Query {
-        hello:User
-    }
+scalar DateTime
 
-    type User {
-        firstName: String
-        lastName: String
-        random: Int
-        pets(species:Species):[Pet!]!
-    }
+type Query {
+    user(id:Int!):User
+}
 
-    type Pet {
-        name:String
-        species: Species
-    }
+type Mutation {
+    createUser(name:String!, email:String!):User
+}
 
-    enum Species {
-        DOG
-        CAT
-        FISH
-    }
-
-    type Mutation {
-        createPet(pet: PetInput):Pet
-    }
-
-    input PetInput {
-        name:String
-        species: Species
-    }
+type Post {
+    id:        Int!
+    createdAt: DateTime!
+    updatedAt: DateTime!
+    title:     String!
+    content:   String
+    published: Boolean!
+    author:    User!
+    authorId:  Int!
+  }
+  
+  type Profile {
+    id:     Int!
+    bio:    String!
+    user:   User!
+    userId: Int!
+  }
+  
+  type User {
+    id:      Int!
+    email:   String!
+    name:    String
+    posts:   [Post!]
+    profile: Profile
+  }
 `)
 
-type Pet = {name:string, species: 'DOG'|'CAT'|'FISH'}
-let pets:Pet[] = [
-    {name: 'Fido', species: "DOG"},
-    {name: 'Goldie', species: "FISH"},
-    {name: 'Spot', species: "DOG"},
-    {name: 'Muffins', species: "CAT"},
-]
+
 let root = {
-    hello: ()=> {
-        return {
-            firstName: "John",
-            lastName: "Doe",
-            random: ()=> Math.floor(Math.random() *  10),
-            pets : (args:{species:string}) => args.species ? pets.filter(p => p.species === args.species):pets
-        }
+    user: async (args:{id:number})=> {
+        const user = await prisma.user.findUnique({
+            where:{
+                id: args.id
+            }
+        })
+        console.log(user);
+        return user
+        
     },
-    createPet: (args:{pet:Pet})=>{
-        pets.push(args.pet)
-        return args.pet
+    createUser: async (args:{name:string, email:string})=>{
+        const createdUser = await prisma.user.create({
+            data:{
+                name:args.name,
+                email: args.email,
+                posts:{
+                    create: {title:"The end is near"}
+                },
+                profile:{
+                    create:{bio:"Coffee is good"}
+                }
+            }
+        })
+        return createdUser
     }
 }
 
